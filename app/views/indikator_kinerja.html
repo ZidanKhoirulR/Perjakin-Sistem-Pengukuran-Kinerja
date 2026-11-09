@@ -1,0 +1,927 @@
+<div class="mb-4 flex items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-xl font-bold text-gray-800">Indikator Kinerja</h2>
+</div>
+
+<div class="mb-5 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <form id="filterForm" action="{{ @BASE.'/Indikator-Kinerja' }}" method="GET">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="relative w-48">
+                <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                </span>
+                <input type="text" id="searchInput" placeholder="Cari indikator..."
+                    class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition"
+                    oninput="filterTable()">
+            </div>
+
+            <div x-data="{
+                open: false,
+                val: '{{ @selectedTopikId ?: 0 }}',
+                label: '{{ (!empty(@selectedTopikId)) ? " Loading..." : " Pilih Topik" }}', selectOpt(v, l) {
+                this.val=v; this.label=l; this.open=false; document.getElementById('hiddenTopik').value=v;
+                $root.closest('form').submit(); } }" class="relative w-64 text-left" x-init="
+                    const tid = '{{ @selectedTopikId ?: 0 }}';
+                    if (tid > 0) {
+                        const tp = document.querySelectorAll('[data-topik-val]');
+                        tp.forEach(el => { if (el.dataset.topikVal == tid) label = el.dataset.topikLabel; });
+                    } else { label = 'Pilih Topik'; }
+                ">
+                <input type="hidden" id="hiddenTopik" name="topik_id" :value="val">
+                <button @click="open = !open" @click.away="open = false" type="button"
+                    class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    <span x-html="label" class="truncate pr-2"></span>
+                    <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180': open}"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div x-show="open" x-transition.opacity.duration.200ms style="display: none;"
+                    class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                    <div class="max-h-60 overflow-y-auto">
+                        <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                            <div @click="selectOpt($el.dataset.topikVal, $el.dataset.topikLabel)"
+                                data-topik-val="{{ @tp.id }}"
+                                data-topik-label="{{ htmlspecialchars(@tp.judul, ENT_QUOTES, 'UTF-8') }}"
+                                class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors truncate"
+                                :class="val == '{{ @tp.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : ''">
+                                {{ @tp.judul }}
+                            </div>
+                        </F3:repeat>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" onclick="event.preventDefault(); bukaModalTambah();"
+                class="ml-auto inline-flex items-center gap-2 px-4 py-2 bg-[#1F4E79] text-white text-sm font-semibold rounded-lg hover:bg-blue-800 transition shadow-sm whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Indikator Kinerja
+            </button>
+        </div>
+    </form>
+</div>
+
+<input type="hidden" id="sessSuccess" value="{{ @successMsg ?? '' }}">
+<input type="hidden" id="sessError" value="{{ @errorMsg ?? '' }}">
+
+
+
+
+<F3:check if="{{ empty(@indikatorGrouped) }}">
+    <F3:true>
+        <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                </path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada data</h3>
+            <p class="mt-1 text-sm text-gray-500">Silakan tambahkan indikator baru untuk tahun {{ @selectedTahun }}.</p>
+        </div>
+    </F3:true>
+    <F3:false>
+        <div class="space-y-6">
+            <F3:repeat group="{{ @indikatorGrouped }}" key="{{ @sasaranName }}" value="{{ @indikatorList }}">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                        <h3 class="text-sm font-bold text-[#1F4E79]">{{ @sasaranName }}
+                        </h3>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full divide-y divide-gray-200 table-fixed">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-5-pct">
+                                        No</th>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-40-pct">
+                                        Nama Indikator</th>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-15-pct">
+                                        Satuan</th>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-10-pct">
+                                        Target</th>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-15-pct">
+                                        PIC</th>
+                                    <th scope="col"
+                                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-15-pct">
+                                        Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <F3:set no="{{ 1 }}" />
+                                <F3:repeat group="{{ @indikatorList }}" value="{{ @ind }}">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td
+                                            class="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-200 w-5-pct">
+                                            {{ @no }}
+                                            <F3:set no="{{ @no+1 }}" />
+                                        </td>
+                                        <td
+                                            class="break-words px-4 py-3 text-left text-sm text-gray-900 border-r border-gray-200 w-40-pct">
+                                            {{ @ind.nama }}</td>
+                                        <td
+                                            class="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-200 break-words whitespace-normal text-wrap w-15-pct">
+                                            {{ @ind.satuan }}</td>
+                                        <td
+                                            class="px-4 py-3 text-center text-sm text-gray-900 border-r border-gray-200 w-10-pct">
+                                            {{ @ind.target_tahunan }}
+                                        </td>
+                                        <td
+                                            class="px-4 py-3 text-center text-sm text-gray-700 font-medium border-r border-gray-200 w-15-pct">
+                                            {{ @ind.pic_nama ?: '-' }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center border-r border-gray-200 w-15-pct">
+                                            <div class="flex items-center justify-center space-x-3">
+                                                <button onclick="bukaModalEdit(this)"
+                                                    data-indikator="{{ htmlspecialchars(json_encode(@ind), ENT_QUOTES, 'UTF-8') }}"
+                                                    data-topik-id="{{ @ind.sasaran_topik_id ?: '' }}"
+                                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
+                                                    Edit
+                                                </button>
+                                                <F3:check if="{{ @ind.has_realization == 0 }}">
+                                                    <F3:true>
+                                                        <span class="text-gray-300">|</span>
+                                                        <button type="button"
+                                                            onclick="confirmHapusAjax('{{ @ind.id }}')"
+                                                            class="text-red-500 hover:text-red-700 text-sm font-medium transition-colors">
+                                                            Hapus
+                                                        </button>
+                                                    </F3:true>
+                                                </F3:check>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </F3:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </F3:repeat>
+        </div>
+    </F3:false>
+</F3:check>
+
+<script>
+    const csrfToken = '{{ @csrf }}';
+
+
+
+    function filterTable() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toLowerCase();
+        // Since indicators are grouped in multiple tbody elements (accordion style or multiple tables),
+        // we need to select all rows with data-indikator attribute or just all trs inside the table bodies
+        const tables = document.querySelectorAll('table');
+
+        tables.forEach(table => {
+            const rows = table.getElementsByTagName('tr');
+            // Start from 1 if there's a thead, or handle properly:
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                // Check if it's a data row (has td)
+                const cells = row.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    let match = false;
+                    // Indikator text is usually in the first or second column. 
+                    // Let's search all textual content of the row to be safe and simple.
+                    const rowText = row.textContent || row.innerText;
+
+                    if (rowText.toLowerCase().indexOf(filter) > -1) {
+                        match = true;
+                    }
+
+                    if (match) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+<div id="modalTambah"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto pl-64">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 my-8 relative">
+        <div class="bg-[#1F4E79] px-6 py-4 flex justify-between items-center rounded-t-2xl">
+            <h3 class="text-base font-semibold text-white flex items-center gap-2">
+                <svg class="h-5 w-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Indikator Kinerja Baru
+            </h3>
+            <button type="button" onclick="tutupModal('modalTambah')"
+                class="text-blue-200 hover:text-white focus:outline-none">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="formTambah" onsubmit="submitTambah(event)">
+            <input type="hidden" name="csrf_token" value="{{ @csrf }}">
+            <div class="px-6 py-5 space-y-4 max-h-[85vh] overflow-y-auto">
+
+                <!-- Cascading Dropdowns using Alpine.js -->
+                <div x-data="{ 
+                        topikId: '', 
+                        topikLabel: '-- Pilih Topik Terlebih Dahulu --', 
+                        tujuanId: '', 
+                        tujuanLabel: '-- Pilih Tujuan / Sasaran --',
+                        openTopik: false,
+                        openTujuan: false,
+                        
+                        selectTopik(id, label) {
+                            this.topikId = id;
+                            this.topikLabel = label;
+                            this.openTopik = false;
+                            
+                            // Reset tujuan when topik changes
+                            this.tujuanId = '';
+                            this.tujuanLabel = '-- Pilih Tujuan / Sasaran --';
+                        },
+                        selectTujuan(id, label) {
+                            if(!this.topikId) return;
+                            this.tujuanId = id;
+                            this.tujuanLabel = label;
+                            this.openTujuan = false;
+                        }
+                    }" @reset-dropdowns.window="
+                        topikId = ''; 
+                        topikLabel = '-- Pilih Topik Terlebih Dahulu --'; 
+                        tujuanId = ''; 
+                        tujuanLabel = '-- Pilih Tujuan / Sasaran --';
+                    " class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Topik Dropdown -->
+                    <div class="relative">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Topik (Opsional Filter) <span
+                                class="text-red-500">*</span></label>
+                        <input type="hidden" name="topik_id" x-model="topikId" required>
+                        <button type="button" @click="openTopik = !openTopik" @click.away="openTopik = false"
+                            class="flex items-center justify-between w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            :class="{'ring-2 ring-[#1F4E79] border-[#1F4E79]': openTopik, 'text-gray-500': !topikId, 'text-gray-900 font-medium': topikId}">
+                            <span x-text="topikLabel" class="truncate pr-4"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+                                :class="{'rotate-180': openTopik}" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div x-show="openTopik" x-transition.opacity.duration.200ms style="display: none;"
+                            class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                            <div class="max-h-60 overflow-y-auto">
+                                <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                                    <div @click="selectTopik('{{ @tp.id }}', '{{ @tp.judul }}')"
+                                        class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm transition-colors"
+                                        :class="topikId == '{{ @tp.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:text-blue-700'">
+                                        {{ @tp.judul }}
+                                    </div>
+                                </F3:repeat>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tujuan Dropdown -->
+                    <div class="relative">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tujuan / Sasaran <span
+                                class="text-red-500">*</span></label>
+                        <input type="hidden" name="tujuan_id" x-model="tujuanId" required>
+                        <button type="button" @click="if(topikId) openTujuan = !openTujuan"
+                            @click.away="openTujuan = false"
+                            class="flex items-center justify-between w-full px-4 py-2 bg-white border rounded-lg text-sm text-left focus:outline-none transition-colors"
+                            :class="{
+                                'border-gray-300 hover:border-blue-400 cursor-pointer': topikId, 
+                                'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed': !topikId,
+                                'ring-2 ring-[#1F4E79] border-[#1F4E79]': openTujuan,
+                                'text-gray-900 font-medium': tujuanId && topikId
+                            }">
+                            <span x-text="tujuanLabel" class="truncate pr-4"></span>
+                            <svg class="w-4 h-4 transition-transform duration-200 shrink-0"
+                                :class="{'rotate-180': openTujuan, 'text-gray-300': !topikId, 'text-gray-400': topikId}"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div x-show="openTujuan" x-transition.opacity.duration.200ms style="display: none;"
+                            class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                            <div class="max-h-60 overflow-y-auto">
+                                <F3:repeat group="{{ @tujuansArr }}" value="{{ @tj }}">
+                                    <div x-show="topikId == '' || topikId == '{{ @tj.topik_id }}'"
+                                        @click="selectTujuan('{{ @tj.id }}', '{{ @tj.kode }} - {{ @tj.nama }}')"
+                                        class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm transition-colors"
+                                        :class="tujuanId == '{{ @tj.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:text-blue-700'">
+                                        {{ @tj.kode }} - {{ @tj.nama }}
+                                    </div>
+                                </F3:repeat>
+                                <div x-show="!$el.parentElement.querySelector('div[x-show]:not([style*=\'display: none\'])')"
+                                    class="px-4 py-3 text-sm text-gray-500 italic text-center">
+                                    Tidak ada Tujuan untuk Topik ini.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Indikator -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Indikator <span
+                            class="text-red-500">*</span></label>
+                    <textarea name="nama" rows="2" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                        placeholder="Cth: Persentase layanan yang diselesaikan tepat waktu"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Target <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="target_tahunan" required
+                            class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            placeholder="Cth: 100, 95.5, 10-20%">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Satuan <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="satuan" required
+                            class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            placeholder="Cth: Persen, Nilai, Hari">
+                    </div>
+                </div>
+
+                <div x-data="{
+                        picId: '',
+                        picSearch: '',
+                        open: false,
+                        selectPic(id, label) {
+                            this.picId = id;
+                            this.picSearch = label === '-- Pilih PIC --' ? '' : label;
+                            this.open = false;
+                        },
+                        clearPic() { this.picId = ''; this.picSearch = ''; this.open = false; }
+                    }" @reset-dropdowns.window="picId = ''; picSearch = ''; open = false;" class="relative">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">PIC (Opsional)</label>
+                    <input type="hidden" name="pic_user_id" value="">
+                    <input type="hidden" name="pic_login" x-model="picId">
+                    <div class="relative">
+                        <input type="text" x-model="picSearch" @input="if (!picId) open = picSearch.length > 0"
+                            @focus="if (!picId) open = true" @click.away="open = false" placeholder="Ketik nama PIC"
+                            autocomplete="off" :readonly="!!picId"
+                            class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            :class="picId ? 'border-[#1F4E79] bg-blue-50 cursor-default select-none' : ''">
+                        <button type="button" x-show="picId" @click="clearPic()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <svg x-show="!picId"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <div x-show="open" x-transition.opacity.duration.150ms style="display: none;"
+                        class="absolute z-50 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
+                        <div class="max-h-40 overflow-y-auto">
+                            <div @click="clearPic()"
+                                class="px-4 py-2.5 cursor-pointer text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100 italic transition-colors"
+                                x-show="picSearch === ''">
+                                &mdash; Hapus pilihan PIC &mdash;
+                            </div>
+                            <F3:repeat group="{{ @pics }}" value="{{ @pic }}">
+                                <div @click="selectPic('{{ @pic.login_sil ?: @pic.id }}', '{{ @pic.nama_lengkap }}')"
+                                    class="px-4 py-2.5 cursor-pointer text-sm transition-colors"
+                                    x-show="picSearch === '' || '{{ @pic.nama_lengkap }}'.toLowerCase().includes(picSearch.toLowerCase())"
+                                    :class="picId == '{{ @pic.login_sil ?: @pic.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'">
+                                    {{ @pic.nama_lengkap }}
+                                </div>
+                            </F3:repeat>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                <button type="button" onclick="tutupModal('modalTambah')"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition shadow-sm">Batal</button>
+                <button type="submit"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition shadow-sm">Simpan
+                    Indikator</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modalEdit"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto pl-64">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-4 my-8 transform transition-all animate-fade-in">
+        <div class="px-6 py-4 border-b border-[#1F4E79] flex items-center justify-between bg-[#1F4E79] rounded-t-2xl">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <h3 class="text-lg font-bold text-white">Edit Indikator Kinerja</h3>
+            </div>
+            <button onclick="tutupModal('modalEdit')"
+                class="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="formEdit" onsubmit="submitEdit(event)">
+            <input type="hidden" name="csrf_token" value="{{ @csrf }}">
+            <input type="hidden" name="id" id="editIndikatorId">
+            <div class="px-6 py-5 space-y-4 max-h-[85vh] overflow-y-auto">
+
+                <!-- Cascading Dropdowns using Alpine.js -->
+                <div x-data="{ 
+                        topikId: '', 
+                        topikLabel: '-- Pilih Topik Terlebih Dahulu --', 
+                        tujuanId: '', 
+                        tujuanLabel: '-- Pilih Tujuan / Sasaran --',
+                        openTopik: false,
+                        openTujuan: false,
+                        
+                        selectTopik(id, label) {
+                            this.topikId = id;
+                            this.topikLabel = label;
+                            this.openTopik = false;
+                            
+                            // Reset tujuan when topik changes
+                            this.tujuanId = '';
+                            this.tujuanLabel = '-- Pilih Tujuan / Sasaran --';
+                        },
+                        selectTujuan(id, label) {
+                            if(!this.topikId) return;
+                            this.tujuanId = id;
+                            this.tujuanLabel = label;
+                            this.openTujuan = false;
+                        }
+                    }" @reset-dropdowns.window="
+                        topikId = ''; 
+                        topikLabel = '-- Pilih Topik Terlebih Dahulu --'; 
+                        tujuanId = ''; 
+                        tujuanLabel = '-- Pilih Tujuan / Sasaran --';
+                    " @populate-dropdowns.window="
+                        topikId = $event.detail.topikId;
+                        topikLabel = $event.detail.topikLabel;
+                        tujuanId = $event.detail.tujuanId;
+                        tujuanLabel = $event.detail.tujuanLabel;
+                    " class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- Topik Dropdown -->
+                    <div class="relative">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Topik (Opsional Filter) <span
+                                class="text-red-500">*</span></label>
+                        <input type="hidden" name="topik_id" x-model="topikId" required>
+                        <button type="button" @click="openTopik = !openTopik" @click.away="openTopik = false"
+                            class="flex items-center justify-between w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            :class="{'ring-2 ring-[#1F4E79] border-[#1F4E79]': openTopik, 'text-gray-500': !topikId, 'text-gray-900 font-medium': topikId}">
+                            <span x-text="topikLabel" class="truncate pr-4"></span>
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+                                :class="{'rotate-180': openTopik}" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div x-show="openTopik" x-transition.opacity.duration.200ms style="display: none;"
+                            class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                            <div class="max-h-60 overflow-y-auto">
+                                <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                                    <div @click="selectTopik('{{ @tp.id }}', '{{ @tp.judul }}')"
+                                        class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm transition-colors"
+                                        :class="topikId == '{{ @tp.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:text-blue-700'">
+                                        {{ @tp.judul }}
+                                    </div>
+                                </F3:repeat>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tujuan Dropdown -->
+                    <div class="relative">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Tujuan / Sasaran <span
+                                class="text-red-500">*</span></label>
+                        <input type="hidden" name="tujuan_id" x-model="tujuanId" required>
+                        <button type="button" @click="if(topikId) openTujuan = !openTujuan"
+                            @click.away="openTujuan = false"
+                            class="flex items-center justify-between w-full px-4 py-2 bg-white border rounded-lg text-sm text-left focus:outline-none transition-colors"
+                            :class="{
+                                'border-gray-300 hover:border-blue-400 cursor-pointer': topikId, 
+                                'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed': !topikId,
+                                'ring-2 ring-[#1F4E79] border-[#1F4E79]': openTujuan,
+                                'text-gray-900 font-medium': tujuanId && topikId
+                            }">
+                            <span x-text="tujuanLabel" class="truncate pr-4"></span>
+                            <svg class="w-4 h-4 transition-transform duration-200 shrink-0"
+                                :class="{'rotate-180': openTujuan, 'text-gray-300': !topikId, 'text-gray-400': topikId}"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <div x-show="openTujuan" x-transition.opacity.duration.200ms style="display: none;"
+                            class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                            <div class="max-h-60 overflow-y-auto">
+                                <F3:repeat group="{{ @tujuansArr }}" value="{{ @tj }}">
+                                    <div x-show="topikId == '' || topikId == '{{ @tj.topik_id }}'"
+                                        @click="selectTujuan('{{ @tj.id }}', '{{ @tj.kode }} - {{ @tj.nama }}')"
+                                        class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm transition-colors"
+                                        :class="tujuanId == '{{ @tj.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:text-blue-700'">
+                                        {{ @tj.kode }} - {{ @tj.nama }}
+                                    </div>
+                                </F3:repeat>
+                                <div x-show="!$el.parentElement.querySelector('div[x-show]:not([style*=\'display: none\'])')"
+                                    class="px-4 py-3 text-sm text-gray-500 italic text-center">
+                                    Tidak ada Tujuan untuk Topik ini.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Indikator -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Indikator <span
+                            class="text-red-500">*</span></label>
+                    <textarea name="nama" id="editNama" rows="2" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                        placeholder="Cth: Persentase layanan yang diselesaikan tepat waktu"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Target <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="target_tahunan" id="editTarget" required
+                            class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            placeholder="Cth: 100, 95.5, 10-20%">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Satuan <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" name="satuan" id="editSatuan" required
+                            class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            placeholder="Cth: Persen, Nilai, Hari">
+                    </div>
+                </div>
+
+                <div x-data="{
+                        picId: '',
+                        picSearch: '',
+                        open: false,
+                        selectPic(id, label) {
+                            this.picId = id;
+                            this.picSearch = label === '-- Pilih PIC --' ? '' : label;
+                            this.open = false;
+                        },
+                        clearPic() { this.picId = ''; this.picSearch = ''; this.open = false; }
+                    }" @populate-dropdowns.window="
+                        picId = $event.detail.picId || '';
+                        picSearch = $event.detail.picLabel || '';
+                        open = false;
+                    " @reset-dropdowns.window="picId = ''; picSearch = ''; open = false;" class="relative">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">PIC (Opsional)</label>
+                    <input type="hidden" name="pic_user_id" value="">
+                    <input type="hidden" name="pic_login" id="editPIC" x-model="picId">
+                    <div class="relative">
+                        <input type="text" x-model="picSearch" @input="if (!picId) open = picSearch.length > 0"
+                            @focus="if (!picId) open = true" @click.away="open = false" placeholder="Ketik nama PIC"
+                            autocomplete="off" :readonly="!!picId"
+                            class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400"
+                            :class="picId ? 'border-[#1F4E79] bg-blue-50 cursor-default select-none' : ''">
+                        <button type="button" x-show="picId" @click="clearPic()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <svg x-show="!picId"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <div x-show="open" x-transition.opacity.duration.150ms style="display: none;"
+                        class="absolute z-50 w-full bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
+                        <div class="max-h-40 overflow-y-auto">
+                            <div @click="clearPic()"
+                                class="px-4 py-2.5 cursor-pointer text-sm text-gray-400 hover:bg-gray-50 border-b border-gray-100 italic transition-colors"
+                                x-show="picSearch === ''">
+                                &mdash; Hapus pilihan PIC &mdash;
+                            </div>
+                            <F3:repeat group="{{ @pics }}" value="{{ @pic }}">
+                                <div @click="selectPic('{{ @pic.login_sil ?: @pic.id }}', '{{ @pic.nama_lengkap }}')"
+                                    class="px-4 py-2.5 cursor-pointer text-sm transition-colors"
+                                    x-show="picSearch === '' || '{{ @pic.nama_lengkap }}'.toLowerCase().includes(picSearch.toLowerCase())"
+                                    :class="picId == '{{ @pic.login_sil ?: @pic.id }}' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'">
+                                    {{ @pic.nama_lengkap }}
+                                </div>
+                            </F3:repeat>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+                <button type="button" onclick="tutupModal('modalEdit')"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition shadow-sm">Batal</button>
+                <button type="submit"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition shadow-sm">Simpan
+                    Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="application/json" id="dataTujuans">{{ json_encode(@tujuansArr) }}</script>
+<script type="application/json" id="dataTopiks">{{ json_encode(@topiks) }}</script>
+<script type="application/json" id="dataPics">{{ json_encode(@pics) }}</script>
+
+<script>
+    function tutupModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function bukaModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function bukaModalTambah() {
+        // Reset HTML form inputs (this clears hidden fields too)
+        document.getElementById('formTambah').reset();
+
+        // Dispatch a custom event so Alpine component can reset its state
+        window.dispatchEvent(new CustomEvent('reset-dropdowns'));
+
+        bukaModal('modalTambah');
+    }
+
+    function filterTujuan() {
+        const topikId = document.getElementById('modalTopik').value;
+        const tujuanSelect = document.getElementById('modalTujuan');
+        const options = tujuanSelect.querySelectorAll('option');
+
+        if (!topikId) {
+            tujuanSelect.disabled = true;
+            tujuanSelect.value = '';
+            for (let i = 1; i < options.length; i++) {
+                options[i].style.display = 'none';
+            }
+            return;
+        }
+
+        // Enable and filter
+        tujuanSelect.disabled = false;
+        let hasMatches = false;
+
+        for (let i = 1; i < options.length; i++) {
+            let matches = options[i].getAttribute('data-topik') === topikId;
+            options[i].style.display = matches ? '' : 'none';
+            if (matches) hasMatches = true;
+        }
+
+        tujuanSelect.value = '';
+
+        if (!hasMatches) {
+            // Optional: you can add a temporary option saying "Data kosong" here if needed
+            tujuanSelect.disabled = true;
+        }
+    }
+
+    // Capture submit via AJAX
+    async function submitTambah(e) {
+        e.preventDefault();
+        const form = document.getElementById('formTambah');
+        const data = new FormData(form);
+
+        try {
+            const res = await fetch('{{ @BASE }}/Indikator-Kinerja/store', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: data
+            });
+            const result = await res.json();
+            tutupModal('modalTambah');
+            window._reloadAfterNotif = result.status === 'success';
+            tampilNotif(result.status, result.message);
+        } catch (err) {
+            console.error(err);
+            tutupModal('modalTambah');
+            tampilNotif('error', 'Terjadi kesalahan pada server saat memproses data.');
+        }
+    }
+
+    // Modal Edit Functions
+    function bukaModalEdit(btn) {
+        const dataStr = btn.getAttribute('data-indikator');
+        const topikId = btn.getAttribute('data-topik-id');
+        const d = JSON.parse(dataStr);
+
+        document.getElementById('formEdit').reset();
+        document.getElementById('editIndikatorId').value = d.id;
+        document.getElementById('editNama').value = d.nama;
+        // Since we changed to string values, ensure parsing isn't coercing.
+        document.getElementById('editTarget').value = d.target_tahunan;
+        document.getElementById('editSatuan').value = d.satuan;
+
+        // Populate Alpine dropdowns
+        const tujuansMapping = JSON.parse(document.getElementById('dataTujuans').textContent);
+        const selectedTujuanId = d.sasaran_tujuan_id;
+
+        // Find the tujuan object in our JS array
+        let tujuanData = tujuansMapping.find(t => t.id == selectedTujuanId);
+
+        let initialTopikId = topikId;
+        let initialTujuanId = selectedTujuanId;
+        let initialTopikLabel = '-- Pilih Topik Terlebih Dahulu --';
+        let initialTujuanLabel = '-- Pilih Tujuan / Sasaran --';
+
+        if (tujuanData) {
+            const topiksMapping = JSON.parse(document.getElementById('dataTopiks').textContent);
+            const topikData = topiksMapping.find(t => t.id == initialTopikId) || topiksMapping.find(t => t.id == tujuanData.topik_id);
+            if (topikData) {
+                initialTopikId = topikData.id;
+                initialTopikLabel = topikData.judul;
+            }
+            initialTujuanLabel = tujuanData.kode + ' - ' + tujuanData.nama;
+        }
+
+        // Find PIC label
+        const picsMapping = JSON.parse(document.getElementById('dataPics').textContent);
+        const picLogin = d.pic_login || '';
+        const picData = picLogin ? picsMapping.find(p => (p.login_sil || '') == picLogin) : picsMapping.find(p => p.id == d.pic_user_id);
+        const initialPicId = picLogin || d.pic_user_id || '';
+        const initialPicLabel = picData ? picData.nama_lengkap : (d.pic_nama || '');
+
+        window.dispatchEvent(new CustomEvent('populate-dropdowns', {
+            detail: {
+                topikId: initialTopikId || '',
+                topikLabel: initialTopikLabel,
+                tujuanId: initialTujuanId || '',
+                tujuanLabel: initialTujuanLabel,
+                picId: initialPicId,
+                picLabel: initialPicLabel
+            }
+        }));
+
+        bukaModal('modalEdit');
+    }
+
+    async function submitEdit(e) {
+        e.preventDefault();
+        const form = document.getElementById('formEdit');
+        const data = new FormData(form);
+        const indikatorId = document.getElementById('editIndikatorId').value;
+
+        try {
+            const res = await fetch('{{ @BASE }}/Indikator-Kinerja/update/' + indikatorId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: data
+            });
+            const result = await res.json();
+            tutupModal('modalEdit');
+            window._reloadAfterNotif = result.status === 'success';
+            tampilNotif(result.status, result.message);
+        } catch (err) {
+            console.error(err);
+            tutupModal('modalEdit');
+            tampilNotif('error', 'Terjadi kesalahan pada server saat memproses data.');
+        }
+    }
+</script>
+
+<!-- ======================== MODAL HAPUS ======================== -->
+<div id="modalHapus" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
+        <div class="px-6 py-5 text-center">
+            <div class="mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <svg class="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-1">Konfirmasi Hapus</h3>
+            <p class="text-sm text-gray-500">Anda yakin ingin menghapus indikator ini?</p>
+            <p class="text-sm font-semibold text-gray-800 mt-1 px-4" id="hapusNamaIndikator"></p>
+        </div>
+        <div class="px-6 pb-5 flex justify-center space-x-3">
+            <button onclick="tutupModal('modalHapus')"
+                class="px-5 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Batal</button>
+            <button id="btnHapusKonfirm" onclick="submitHapus()"
+                class="px-5 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors font-semibold">Ya,
+                Hapus</button>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== MODAL NOTIFIKASI ======================== -->
+<div id="modalNotif" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        <div class="px-6 py-6 text-center">
+            <div id="notifIcon" class="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4"></div>
+            <h3 id="notifTitle" class="text-lg font-semibold text-gray-800 mb-1"></h3>
+            <p id="notifMessage" class="text-sm text-gray-500"></p>
+        </div>
+        <div class="px-6 pb-6 flex justify-center">
+            <button onclick="tutupNotif()"
+                class="px-10 py-2.5 text-sm text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition font-semibold shadow-sm text-center">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentHapusId = null;
+
+    function tampilNotif(status, message) {
+        const icon = document.getElementById('notifIcon');
+        const title = document.getElementById('notifTitle');
+        const msg = document.getElementById('notifMessage');
+        if (status === 'success') {
+            icon.className = 'mx-auto w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4';
+            icon.innerHTML = '<svg class="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            title.textContent = 'Berhasil!';
+        } else {
+            icon.className = 'mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4';
+            icon.innerHTML = '<svg class="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            title.textContent = 'Gagal!';
+        }
+        msg.textContent = message;
+        bukaModal('modalNotif');
+    }
+
+    function tutupNotif() {
+        tutupModal('modalNotif');
+        if (window._reloadAfterNotif) {
+            window._reloadAfterNotif = false;
+            location.reload();
+        }
+    }
+
+    function confirmHapusAjax(id) {
+        currentHapusId = id;
+        bukaModal('modalHapus');
+    }
+
+    async function submitHapus() {
+        if (!currentHapusId) return;
+        const formData = new FormData();
+        formData.append('csrf_token', csrfToken);
+        try {
+            const r = await fetch('{{ @BASE }}/Indikator-Kinerja/delete/' + currentHapusId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await r.json();
+            tutupModal('modalHapus');
+            window._reloadAfterNotif = data.status === 'success';
+            tampilNotif(data.status, data.message);
+        } catch {
+            tutupModal('modalHapus');
+            tampilNotif('error', 'Terjadi kesalahan jaringan.');
+        }
+    }
+
+    window.onload = function () {
+        const s = document.getElementById('sessSuccess').value;
+        const e = document.getElementById('sessError').value;
+        if (s) tampilNotif('success', s);
+        else if (e) tampilNotif('error', e);
+    };
+
+    ['modalTambah', 'modalEdit', 'modalHapus', 'modalNotif'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('click', function (e) {
+                if (e.target === this) tutupModal(id);
+            });
+        }
+    });
+</script>

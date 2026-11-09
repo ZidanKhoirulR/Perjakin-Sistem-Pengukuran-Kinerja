@@ -1,0 +1,53 @@
+# ======================================================
+# .gitignore — Sistem Perjanjian Kinerja (PERJAKIN)
+# ======================================================
+
+# === Dependensi Composer ===
+/vendor/
+
+# === File Konfigurasi Sensitif ===
+# File utama berisi kredensial DB & API key.
+# Gunakan index.php.example sebagai template.
+index.php
+.htaccess
+
+# === Database ===
+*.sql
+*.sqlite
+*.sqlite3
+/database/
+
+# === File Temporary ===
+/tmp/
+*.log
+*.cache
+
+# === Screenshot (hanya untuk dokumentasi lokal) ===
+/screenshoot/
+/screenshot/
+
+# === Upload User ===
+/public/avatar/
+/public/uploads_login_pics/
+
+# === OS Generated Files ===
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# === IDE / Editor ===
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+nbproject/
+
+# === Environment ===
+.env
+.env.*
+

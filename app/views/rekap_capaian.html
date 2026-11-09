@@ -1,0 +1,170 @@
+<div class="mb-4 flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-xl font-bold text-gray-800">Rekap Capaian Kinerja</h2>
+
+    <form id="filterForm" action="{{ @BASE.'/Rekap-Capaian' }}" method="GET" class="flex items-center gap-3">
+        <div x-data="{
+            open: false,
+            val: '{{ @selectedTopikId }}',
+            label: 'Pilih Topik',
+            go(v,l){ this.val=v; this.label=l; this.open=false; document.getElementById('hTopik').value=v; document.getElementById('filterForm').submit(); }
+        }" x-init="const t='{{ @selectedTopikId }}'; if(parseInt(t)>0){ document.querySelectorAll('[data-tv]').forEach(e=>{ if(e.dataset.tv==t) label=e.dataset.tl; }); }"
+            class="relative w-60 text-left">
+            <input type="hidden" id="hTopik" name="topik_id" :value="val">
+            <button @click="open=!open" @click.away="open=false" type="button"
+                class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none transition-colors">
+                <span x-html="label" class="truncate pr-2"></span>
+                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" :class="{'rotate-180':open}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div x-show="open" x-transition.opacity.duration.200ms x-cloak
+                class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                <div class="max-h-60 overflow-y-auto">
+                    <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                        <div @click="go('{{ @tp.id }}','{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}')"
+                            data-tv="{{ @tp.id }}" data-tl="{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}"
+                            class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors"
+                            :class="val=='{{ @tp.id }}'?'bg-blue-50 text-blue-700 font-bold':''">{{ @tp.judul }}
+                        </div>
+                    </F3:repeat>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<F3:check if="{{ empty(@indikatorGrouped) }}">
+    <F3:true>
+        <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada data</h3>
+            <p class="mt-1 text-sm text-gray-500">Silakan tambahkan indikator dan isi data capaian terlebih dahulu.</p>
+        </div>
+    </F3:true>
+    <F3:false>
+        <div class="space-y-6">
+            <F3:repeat group="{{ @indikatorGrouped }}" key="{{ @tujuanKey }}" value="{{ @indikatorList }}">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+                    <div class="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                        <h3 class="text-sm font-bold text-[#1F4E79]">{{ @tujuanKey }}</h3>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th rowspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase border-r border-gray-200 w-10">
+                                        No</th>
+                                    <th rowspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase border-r border-gray-200 min-w-[220px]">
+                                        Indikator Kinerja</th>
+                                    <th rowspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase border-r border-gray-200">
+                                        Target</th>
+                                    <th colspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-blue-600 uppercase border-r border-gray-200 bg-blue-50">
+                                        Triwulan 1</th>
+                                    <th colspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-indigo-600 uppercase border-r border-gray-200 bg-indigo-50">
+                                        Triwulan 2</th>
+                                    <th colspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-purple-600 uppercase border-r border-gray-200 bg-purple-50">
+                                        Triwulan 3</th>
+                                    <th colspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-green-700 uppercase border-r border-gray-200 bg-green-50">
+                                        Triwulan 4</th>
+                                    <th colspan="2"
+                                        class="px-3 py-2 text-center text-xs font-bold text-orange-700 uppercase bg-orange-50">
+                                        Capaian Akhir</th>
+                                </tr>
+                                <tr>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-blue-50/60 w-24">
+                                        Realisasi</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-blue-50/60 w-24">
+                                        Capaian %</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-indigo-50/60 w-24">
+                                        Realisasi</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-indigo-50/60 w-24">
+                                        Capaian %</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-purple-50/60 w-24">
+                                        Realisasi</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-purple-50/60 w-24">
+                                        Capaian %</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-green-50/60 w-24">
+                                        Realisasi</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-green-50/60 w-24">
+                                        Capaian %</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase border-r border-gray-200 bg-orange-50/60 w-24">
+                                        Realisasi</th>
+                                    <th
+                                        class="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase bg-orange-50/60 w-24">
+                                        Capaian %</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100">
+                                <F3:set ctr="{{ 1 }}" />
+                                <F3:repeat group="{{ @indikatorList }}" value="{{ @ind }}">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-3 py-3 text-center text-gray-500 border-r border-gray-100">
+                                            {{ @ctr }}
+                                            <F3:set ctr="{{ @ctr + 1 }}" />
+                                        </td>
+                                        <td class="px-3 py-3 text-gray-800 border-r border-gray-100">{{ @ind.nama }}
+                                        </td>
+                                        <td
+                                            class="px-3 py-3 text-center text-gray-700 border-r border-gray-100 font-medium">
+                                            {{ @ind.target_tahunan }}</td>
+
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-blue-50/30 ">
+                                            {{
+                                            @ind.tw1 }}</td>
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-blue-50/30">
+                                            {{ @ind.capaian_tw1 }}</td>
+
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-indigo-50/30 ">
+                                            {{
+                                            @ind.tw2 }}</td>
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-indigo-50/30">
+                                            {{ @ind.capaian_tw2 }}</td>
+
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-purple-50/30 ">
+                                            {{
+                                            @ind.tw3 }}</td>
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-purple-50/30">
+                                            {{ @ind.capaian_tw3 }}</td>
+
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-green-50/30 ">
+                                            {{
+                                            @ind.tw4 }}</td>
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-green-50/30">
+                                            {{ @ind.capaian_tw4 }}</td>
+
+                                        <td class="px-3 py-3 text-center border-r border-gray-100 bg-orange-50/30 ">
+                                            {{
+                                            @ind.realisasi_akhir }}</td>
+                                        <td class="px-3 py-3 text-center bg-orange-50/30">
+                                            {{ @ind.capaian_akhir_val }}</td>
+                                    </tr>
+                                </F3:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </F3:repeat>
+        </div>
+    </F3:false>
+</F3:check>

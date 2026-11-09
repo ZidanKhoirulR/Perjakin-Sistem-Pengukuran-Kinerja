@@ -1,0 +1,743 @@
+<div class="mb-4 flex items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-xl font-bold text-gray-800">Capaian Kinerja</h2>
+</div>
+
+<div x-data="{ activeTw: '{{ @selectedTw ?: 1 }}' }">
+    <input type="hidden" id="currentActiveTw" :value="activeTw">
+
+    <div class="mb-5 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+
+            <form id="filterForm" action="{{ @BASE.'/Capaian-Kinerja' }}" method="GET"
+                class="flex flex-wrap items-center gap-3">
+                <div class="relative w-52">
+                    <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="searchInput" placeholder="Cari indikator..." oninput="filterRows()"
+                        class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition">
+                </div>
+
+                <div x-data="{
+                    open:false, val:'{{ @selectedTopikId ?: 0 }}', label:'Pilih Topik',
+                    go(v,l){this.val=v;this.label=l;this.open=false;document.getElementById('hTopik').value=v;document.getElementById('filterForm').submit();}
+                }" x-init="const t='{{ @selectedTopikId ?: 0 }}'; if(parseInt(t)>0){document.querySelectorAll('[data-tv]').forEach(e=>{if(e.dataset.tv==t)label=e.dataset.tl;});}"
+                    class="relative w-52 text-left">
+                    <input type="hidden" id="hTopik" name="topik_id" :value="val">
+                    <button @click="open=!open" @click.away="open=false" type="button"
+                        class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <span x-html="label" class="truncate pr-2"></span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                            :class="{'rotate-180':open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition.opacity.duration.200ms x-cloak
+                        class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                        <div class="max-h-60 overflow-y-auto">
+                            <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                                <div @click="go('{{ @tp.id }}','{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}')"
+                                    data-tv="{{ @tp.id }}" data-tl="{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}"
+                                    class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors"
+                                    :class="val=='{{ @tp.id }}'?'bg-blue-50 text-blue-700 font-bold':''">{{ @tp.judul }}
+                                </div>
+                            </F3:repeat>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-data="{
+                    open:false, label:'{{ (@selectedTw === 'akhir') ? 'Capaian Akhir' : 'Triwulan ' . (@selectedTw ?: 1) }}',
+                    set(v,l){activeTw=v;this.label=l;this.open=false;}
+                }" class="relative w-44 text-left">
+                    <button @click="open=!open" @click.away="open=false" type="button"
+                        class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <span x-text="label" class="truncate pr-2"></span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                            :class="{'rotate-180':open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition.opacity.duration.200ms x-cloak
+                        class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                        <div @click="set('1','Triwulan 1')"
+                            :class="activeTw=='1'?'bg-blue-50 text-[#1F4E79] font-semibold':'text-slate-600 hover:bg-blue-50 hover:text-blue-700'"
+                            class="px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors">Triwulan 1</div>
+                        <div @click="set('2','Triwulan 2')"
+                            :class="activeTw=='2'?'bg-blue-50 text-[#1F4E79] font-semibold':'text-slate-600 hover:bg-blue-50 hover:text-blue-700'"
+                            class="px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors">Triwulan 2</div>
+                        <div @click="set('3','Triwulan 3')"
+                            :class="activeTw=='3'?'bg-blue-50 text-[#1F4E79] font-semibold':'text-slate-600 hover:bg-blue-50 hover:text-blue-700'"
+                            class="px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors">Triwulan 3</div>
+                        <div @click="set('4','Triwulan 4')"
+                            :class="activeTw=='4'?'bg-blue-50 text-[#1F4E79] font-semibold':'text-slate-600 hover:bg-blue-50 hover:text-blue-700'"
+                            class="px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors">Triwulan 4</div>
+                        <div @click="set('akhir','Capaian Akhir')"
+                            :class="activeTw=='akhir'?'bg-blue-50 text-[#1F4E79] font-semibold':'text-slate-600 hover:bg-blue-50 hover:text-blue-700'"
+                            class="px-4 py-2.5 cursor-pointer text-sm font-medium transition-colors border-t border-gray-100">
+                            Capaian Akhir</div>
+                    </div>
+                </div>
+            </form>
+
+            <a :href="'{{ @BASE }}/Capaian-Kinerja/export?topik_id={{ @selectedTopikId ?: 0 }}&tw=' + activeTw"
+                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Excel
+            </a>
+
+        </div>
+    </div>
+
+    <F3:check if="{{ isset(@successMsg) }}">
+        <script>document.addEventListener('DOMContentLoaded', () => tampilNotif('success', '{{ @successMsg }}'));</script>
+    </F3:check>
+    <F3:check if="{{ isset(@errorMsg) }}">
+        <script>document.addEventListener('DOMContentLoaded', () => tampilNotif('error', '{{ @errorMsg }}'));</script>
+    </F3:check>
+
+    <F3:check if="{{ empty(@indikatorGrouped) }}">
+        <F3:true>
+            <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada data</h3>
+                <p class="mt-1 text-sm text-gray-500">Silakan tambahkan indikator baru dari menu Indikator Kinerja.</p>
+            </div>
+        </F3:true>
+        <F3:false>
+
+            <div class="space-y-6">
+                <F3:repeat group="{{ @indikatorGrouped }}" key="{{ @tujuanKey }}" value="{{ @indikatorList }}">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-6">
+                        <div class="bg-blue-50 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-[#1F4E79]">
+                                {{ @tujuanKey }}
+                            </h3>
+                            <span class="text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-1 rounded">Triwulan
+                                <span x-text="activeTw"></span></span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12 border-r border-gray-200">
+                                            No</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 min-w-[220px]">
+                                            Indikator Kerja</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                                            Target</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-28">
+                                            Realisasi</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-36">
+                                            Capaian %</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-[250px] min-w-[250px]">
+                                            Keterangan</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-[250px] min-w-[250px]">
+                                            Kendala</th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-[250px] min-w-[250px]">
+                                            Rekomendasi</th>
+                                        <F3:check
+                                            if="{{ \Helpers\AuthHelper::hasRole('superadmin') || \Helpers\AuthHelper::hasRole('pic') }}">
+                                            <th scope="col"
+                                                class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                                                Aksi</th>
+                                        </F3:check>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200 tbody-search">
+                                    <F3:set ctr="{{ 1 }}" />
+                                    <F3:repeat group="{{ @indikatorList }}" value="{{ @ind }}">
+                                        <tr class="hover:bg-gray-50 transition-colors"
+                                            data-searchable="{{ strtolower(@tujuanKey . ' ' . @ind.nama) }}">
+
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900 border-r border-gray-200">
+                                                {{ @ctr }}
+                                                <F3:set ctr="{{ @ctr + 1 }}" />
+                                            </td>
+
+                                            <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                                                {{ @ind.nama }}
+                                            </td>
+
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900 border-r border-gray-200">
+                                                {{ @ind.target_tahunan }}
+                                            </td>
+
+                                            <td class="px-4 py-3 whitespace-nowrap text-center text-sm font-bold border-r border-gray-200"
+                                                :class="activeTw=='akhir' ? 'bg-green-50/50' : ''">
+                                                <F3:check if="{{ @ind.status == 'hijau' }}">
+                                                    <F3:true><span class="text-green-600" x-show="activeTw=='1'">{{
+                                                            @ind.tw1 ?: '-' }}</span>
+                                                        <span class="text-green-600" x-show="activeTw=='2'" x-cloak>{{
+                                                            @ind.tw2 ?: '-' }}</span>
+                                                        <span class="text-green-600" x-show="activeTw=='3'" x-cloak>{{
+                                                            @ind.tw3 ?: '-' }}</span>
+                                                        <span class="text-green-600" x-show="activeTw=='4'" x-cloak>{{
+                                                            @ind.tw4 ?: '-' }}</span>
+                                                        <span class="text-green-600" x-show="activeTw=='akhir'"
+                                                            x-cloak>{{ @ind.realisasi_akhir ?: '-'
+                                                            }}</span>
+                                                    </F3:true>
+                                                </F3:check>
+                                                <F3:check if="{{ @ind.status == 'kuning' || @ind.status == 'gray' }}">
+                                                    <F3:true><span class="text-yellow-600" x-show="activeTw=='1'">{{
+                                                            @ind.tw1 ?: '-' }}</span>
+                                                        <span class="text-yellow-600" x-show="activeTw=='2'" x-cloak>{{
+                                                            @ind.tw2 ?: '-' }}</span>
+                                                        <span class="text-yellow-600" x-show="activeTw=='3'" x-cloak>{{
+                                                            @ind.tw3 ?: '-' }}</span>
+                                                        <span class="text-yellow-600" x-show="activeTw=='4'" x-cloak>{{
+                                                            @ind.tw4 ?: '-' }}</span>
+                                                        <span class="text-yellow-600" x-show="activeTw=='akhir'"
+                                                            x-cloak>{{ @ind.realisasi_akhir ?: '-'
+                                                            }}</span>
+                                                    </F3:true>
+                                                </F3:check>
+                                                <F3:check if="{{ @ind.status == 'merah' }}">
+                                                    <F3:true><span class="text-red-600" x-show="activeTw=='1'">{{
+                                                            @ind.tw1 ?: '-' }}</span>
+                                                        <span class="text-red-600" x-show="activeTw=='2'" x-cloak>{{
+                                                            @ind.tw2 ?: '-' }}</span>
+                                                        <span class="text-red-600" x-show="activeTw=='3'" x-cloak>{{
+                                                            @ind.tw3 ?: '-' }}</span>
+                                                        <span class="text-red-600" x-show="activeTw=='4'" x-cloak>{{
+                                                            @ind.tw4 ?: '-' }}</span>
+                                                        <span class="text-red-600" x-show="activeTw=='akhir'" x-cloak>{{
+                                                            @ind.realisasi_akhir ?: '-'
+                                                            }}</span>
+                                                    </F3:true>
+                                                </F3:check>
+                                                <F3:check if="{{ !@ind.status }}">
+                                                    <F3:true><span class="text-gray-900" x-show="activeTw=='1'">{{
+                                                            @ind.tw1 ?: '-' }}</span>
+                                                        <span class="text-gray-900" x-show="activeTw=='2'" x-cloak>{{
+                                                            @ind.tw2 ?: '-' }}</span>
+                                                        <span class="text-gray-900" x-show="activeTw=='3'" x-cloak>{{
+                                                            @ind.tw3 ?: '-' }}</span>
+                                                        <span class="text-gray-900" x-show="activeTw=='4'" x-cloak>{{
+                                                            @ind.tw4 ?: '-' }}</span>
+                                                        <span class="text-gray-900" x-show="activeTw=='akhir'"
+                                                            x-cloak>{{ @ind.realisasi_akhir ?: '-'
+                                                            }}</span>
+                                                    </F3:true>
+                                                </F3:check>
+                                            </td>
+
+                                            <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-900 border-r border-gray-200"
+                                                :class="activeTw=='akhir' ? 'bg-green-50/50' : ''">
+                                                <span x-show="activeTw=='1'">{{ @ind.capaian_tw1 !== null ?
+                                                    @ind.capaian_tw1
+                                                    . ' %' : '-' }}</span>
+                                                <span x-show="activeTw=='2'" x-cloak>{{ @ind.capaian_tw2
+                                                    !==
+                                                    null ? @ind.capaian_tw2 . ' %' : '-' }}</span>
+                                                <span x-show="activeTw=='3'" x-cloak>{{ @ind.capaian_tw3
+                                                    !==
+                                                    null ? @ind.capaian_tw3 . ' %' : '-' }}</span>
+                                                <span x-show="activeTw=='4'" x-cloak>{{ @ind.capaian_tw4
+                                                    !==
+                                                    null ? @ind.capaian_tw4 . ' %' : '-' }}</span>
+                                                <span x-show="activeTw=='akhir'" x-cloak>{{
+                                                    @ind.capaian_akhir !== null
+                                                    ?
+                                                    @ind.capaian_akhir . ' %' : '-' }}</span>
+                                            </td>
+
+                                            <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 w-[250px] min-w-[250px] max-w-[250px]"
+                                                :class="activeTw=='akhir' ? 'bg-green-50/50' : ''">
+                                                <span x-show="activeTw=='1'"
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.keterangan_tw1) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.keterangan_tw1 ?: '-' }}</span>
+                                                <span x-show="activeTw=='2'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.keterangan_tw2) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.keterangan_tw2 ?: '-' }}</span>
+                                                <span x-show="activeTw=='3'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.keterangan_tw3) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.keterangan_tw3 ?: '-' }}</span>
+                                                <span x-show="activeTw=='4'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.keterangan_tw4) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.keterangan_tw4 ?: '-' }}</span>
+                                                <span x-show="activeTw=='akhir'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.keterangan_akhir) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.keterangan_akhir ?: '-' }}</span>
+                                            </td>
+
+                                            <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 w-[250px] min-w-[250px] max-w-[250px]"
+                                                :class="activeTw=='akhir' ? 'bg-green-50/50' : ''">
+                                                <span x-show="activeTw=='1'"
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.kendala_tw1) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.kendala_tw1 ?: '-' }}</span>
+                                                <span x-show="activeTw=='2'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.kendala_tw2) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.kendala_tw2 ?: '-' }}</span>
+                                                <span x-show="activeTw=='3'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.kendala_tw3) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.kendala_tw3 ?: '-' }}</span>
+                                                <span x-show="activeTw=='4'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.kendala_tw4) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.kendala_tw4 ?: '-' }}</span>
+                                                <span x-show="activeTw=='akhir'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.kendala_akhir) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.kendala_akhir ?: '-' }}</span>
+                                            </td>
+
+                                            <td class="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 w-[250px] min-w-[250px] max-w-[250px]"
+                                                :class="activeTw=='akhir' ? 'bg-green-50/50' : ''">
+                                                <span x-show="activeTw=='1'"
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.rekomendasi_tw1) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.rekomendasi_tw1 ?: '-' }}</span>
+                                                <span x-show="activeTw=='2'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.rekomendasi_tw2) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.rekomendasi_tw2 ?: '-' }}</span>
+                                                <span x-show="activeTw=='3'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.rekomendasi_tw3) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.rekomendasi_tw3 ?: '-' }}</span>
+                                                <span x-show="activeTw=='4'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.rekomendasi_tw4) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.rekomendasi_tw4 ?: '-' }}</span>
+                                                <span x-show="activeTw=='akhir'" x-cloak
+                                                    class="whitespace-pre-wrap break-words block {{ empty(@ind.rekomendasi_akhir) ? 'text-center text-gray-400 font-medium' : 'text-left align-top' }}">{{
+                                                    @ind.rekomendasi_akhir ?: '-' }}</span>
+                                            </td>
+
+                                            <F3:check
+                                                if="{{ \Helpers\AuthHelper::hasRole('superadmin') || \Helpers\AuthHelper::hasRole('pic') }}">
+                                                <td class="px-4 py-3 text-center">
+                                                    <button onclick="bukaModalIsi(this)"
+                                                        data-indikator="{{ htmlspecialchars(json_encode(@ind), ENT_QUOTES) }}"
+                                                        :data-tw="activeTw"
+                                                        class="inline-flex items-center gap-1 bg-[#1F4E79] hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition shadow-sm whitespace-nowrap">
+                                                        Isi Detail
+                                                    </button>
+                                                </td>
+                                            </F3:check>
+                                        </tr>
+                                    </F3:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </F3:repeat>
+            </div>
+
+        </F3:false>
+    </F3:check>
+
+
+    <script>
+        function filterRows() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.tbody-search tr[data-searchable]').forEach(r => {
+                r.style.display = (!q || r.dataset.searchable.includes(q)) ? '' : 'none';
+            });
+        }
+        function parseNum(s) {
+            if (!s) return 0;
+            s = String(s).trim().replace(/%/g, '');
+            if (s.includes(',')) s = s.split('.').join('').replace(',', '.');
+            return parseFloat(s.replace(/[^0-9.-]/g, '')) || 0;
+        }
+        function tutupModal(id) { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; }
+        function bukaModal(id) { document.getElementById(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+    </script>
+
+    <div id="modalIsi"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-hidden sm:pl-64 py-6">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] xl:max-w-7xl mx-4 h-[90vh] flex flex-col">
+
+            <div
+                class="flex items-center justify-between px-6 py-4 border-b border-[#1F4E79] bg-[#1F4E79] shrink-0 rounded-t-xl">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-white" id="lblModalTitle">Isi Data Triwulan</h3>
+                </div>
+                <button type="button" onclick="tutupModal('modalIsi')"
+                    class="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-lg focus:outline-none transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="formIsi" onsubmit="submitIsi(event)" class="flex-1 flex flex-col min-h-0">
+                <input type="hidden" name="csrf_token" value="{{ @csrf }}">
+                <input type="hidden" name="id" id="isiId">
+                <input type="hidden" name="target" id="isiTarget">
+
+                <div class="px-6 pt-4 shrink-0 space-y-2">
+                    <div class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3">
+                        <p class="text-xs font-medium text-gray-500 mb-0.5">Indikator Kinerja</p>
+                        <p class="text-sm font-semibold text-[#1F4E79] leading-snug" id="lblIndikator">-</p>
+                    </div>
+                    <div
+                        class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 mb-0.5">Target Tahunan</p>
+                            <p class="text-sm font-bold text-[#1F4E79]" id="lblTarget">-</p>
+                        </div>
+                        <div id="capaianAutoContainer" class="text-right" style="display:none;">
+                            <p class="text-xs font-medium text-gray-500 mb-0.5">Capaian Akhir (auto)</p>
+                            <p class="text-sm font-bold" id="outputCapaian">
+                                <span class="text-gray-700">0.00</span>
+                                <span class="text-xs text-gray-400 font-normal">%</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="px-6 py-4 space-y-4 flex-1 overflow-y-auto">
+                    <div id="section-tw1" class="space-y-3" style="display:none">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realisasi Triwulan 1</label>
+                                <input type="text" name="tw1" id="tw1" placeholder="Cth: 75, 75.5"
+                                    oninput="hitungCapaianTw(1)"
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capaian Triwulan 1</label>
+                                <input type="text" id="capaian_tw1_display" readonly placeholder="-"
+                                    class="block w-full border border-gray-200 rounded-lg shadow-sm text-sm bg-gray-50 text-gray-700 px-3 py-2 cursor-default">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Triwulan 1</label>
+                            <textarea name="keterangan_tw1" id="keterangan_tw1" rows="4"
+                                placeholder="Rincian capaian Triwulan 1..."
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kendala Triwulan 1</label>
+                                <textarea name="kendala_tw1" id="kendala_tw1" rows="6" placeholder="Hambatan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rekomendasi Triwulan
+                                    1</label>
+                                <textarea name="rekomendasi_tw1" id="rekomendasi_tw1" rows="6"
+                                    placeholder="Tindak lanjut..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-tw2" class="space-y-3" style="display:none">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realisasi Triwulan 2</label>
+                                <input type="text" name="tw2" id="tw2" placeholder="Cth: 75, 75.5"
+                                    oninput="hitungCapaianTw(2)"
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capaian Triwulan 2</label>
+                                <input type="text" id="capaian_tw2_display" readonly placeholder="-"
+                                    class="block w-full border border-gray-200 rounded-lg shadow-sm text-sm bg-gray-50 text-gray-700 px-3 py-2 cursor-default">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Triwulan 2</label>
+                            <textarea name="keterangan_tw2" id="keterangan_tw2" rows="4"
+                                placeholder="Rincian capaian Triwulan 2..."
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kendala Triwulan 2</label>
+                                <textarea name="kendala_tw2" id="kendala_tw2" rows="6" placeholder="Hambatan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rekomendasi Triwulan
+                                    2</label>
+                                <textarea name="rekomendasi_tw2" id="rekomendasi_tw2" rows="6"
+                                    placeholder="Tindak lanjut..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-tw3" class="space-y-3" style="display:none">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realisasi Triwulan 3</label>
+                                <input type="text" name="tw3" id="tw3" placeholder="Cth: 75, 75.5"
+                                    oninput="hitungCapaianTw(3)"
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capaian Triwulan 3</label>
+                                <input type="text" id="capaian_tw3_display" readonly placeholder="-"
+                                    class="block w-full border border-gray-200 rounded-lg shadow-sm text-sm bg-gray-50 text-gray-700 px-3 py-2 cursor-default">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Triwulan 3</label>
+                            <textarea name="keterangan_tw3" id="keterangan_tw3" rows="4"
+                                placeholder="Rincian capaian Triwulan 3..."
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kendala Triwulan 3</label>
+                                <textarea name="kendala_tw3" id="kendala_tw3" rows="6" placeholder="Hambatan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rekomendasi Triwulan
+                                    3</label>
+                                <textarea name="rekomendasi_tw3" id="rekomendasi_tw3" rows="6"
+                                    placeholder="Tindak lanjut..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-tw4" class="space-y-3" style="display:none">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realisasi Triwulan 4</label>
+                                <input type="text" name="tw4" id="tw4" placeholder="Cth: 75, 75.5"
+                                    oninput="hitungCapaianTw(4)"
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capaian Triwulan 4</label>
+                                <input type="text" id="capaian_tw4_display" readonly placeholder="-"
+                                    class="block w-full border border-gray-200 rounded-lg shadow-sm text-sm bg-gray-50 text-gray-700 px-3 py-2 cursor-default">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Triwulan 4</label>
+                            <textarea name="keterangan_tw4" id="keterangan_tw4" rows="4"
+                                placeholder="Rincian capaian Triwulan 4..."
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kendala Triwulan 4</label>
+                                <textarea name="kendala_tw4" id="kendala_tw4" rows="6" placeholder="Hambatan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rekomendasi Triwulan
+                                    4</label>
+                                <textarea name="rekomendasi_tw4" id="rekomendasi_tw4" rows="6"
+                                    placeholder="Tindak lanjut..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-akhir" class="space-y-3" style="display:none">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Realisasi Akhir</label>
+                                <input type="text" name="realisasi_akhir" id="realisasi_akhir" oninput="hitungCapaian()"
+                                    placeholder="Contoh: 102.5"
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 transition">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Capaian Akhir</label>
+                                <input type="text" id="outputCapaianAkhir" readonly placeholder="-"
+                                    class="block w-full border border-gray-200 rounded-lg shadow-sm text-sm bg-gray-50 text-gray-700 px-3 py-2 cursor-default">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan Akhir</label>
+                            <textarea name="keterangan_akhir" id="keterangan_akhir" rows="4"
+                                placeholder="Rincian capaian akhir..."
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kendala Akhir</label>
+                                <textarea name="kendala_akhir" id="kendala_akhir" rows="6"
+                                    placeholder="Hambatan keseluruhan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rekomendasi Akhir</label>
+                                <textarea name="rekomendasi_akhir" id="rekomendasi_akhir" rows="6"
+                                    placeholder="Tindak lanjut kedepan..."
+                                    class="block w-full border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-[#1F4E79] focus:border-[#1F4E79] px-3 py-2 resize-none transition"></textarea>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="px-6 py-4 border-t border-gray-100 flex justify-end space-x-3 bg-gray-50 rounded-b-xl">
+                    <button type="button" onclick="tutupModal('modalIsi')"
+                        class="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Batal</button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition-colors font-semibold">Simpan
+                        Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalNotif" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div class="px-6 py-6 text-center">
+                <div id="notifIcon" class="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4"></div>
+                <h3 id="notifTitle" class="text-lg font-semibold text-gray-800 mb-1"></h3>
+                <p id="notifMessage" class="text-sm text-gray-500"></p>
+            </div>
+            <div class="px-6 pb-6 flex justify-center">
+                <button onclick="tutupNotif()"
+                    class="px-10 py-2.5 text-sm text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition font-semibold shadow-sm text-center">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function tampilNotif(status, message) {
+            const icon = document.getElementById('notifIcon');
+            const title = document.getElementById('notifTitle');
+            const msg = document.getElementById('notifMessage');
+            if (status === 'success') {
+                icon.className = 'mx-auto w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4';
+                icon.innerHTML = '<svg class="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                title.textContent = 'Berhasil!';
+            } else {
+                icon.className = 'mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4';
+                icon.innerHTML = '<svg class="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+                title.textContent = 'Gagal!';
+            }
+            msg.textContent = message;
+            if (typeof bukaModal === 'function') bukaModal('modalNotif');
+        }
+
+        function tutupNotif() {
+            if (typeof tutupModal === 'function') tutupModal('modalNotif');
+            if (window._reloadAfterNotif) {
+                window._reloadAfterNotif = false;
+                if (window._reloadUrl) {
+                    window.location.href = window._reloadUrl;
+                } else {
+                    location.reload();
+                }
+            }
+        }
+
+        document.addEventListener('click', function (e) {
+            var el = document.getElementById('modalNotif');
+            if (el && e.target === el) tutupNotif();
+        });
+
+        const twLabels = { '1': 'Triwulan 1', '2': 'Triwulan 2', '3': 'Triwulan 3', '4': 'Triwulan 4', 'akhir': 'Capaian Akhir' };
+
+        function bukaModalIsi(btn) {
+            const ind = JSON.parse(btn.getAttribute('data-indikator'));
+            const tw = btn.dataset.tw || '1';
+
+            document.getElementById('lblModalTitle').innerText = 'Isi Data ' + (twLabels[tw] || 'Triwulan');
+
+            document.getElementById('isiId').value = ind.id;
+            if (document.getElementById('lblIndikator')) document.getElementById('lblIndikator').innerText = ind.nama || '-';
+            const tRaw = ind.target_tahunan || '1';
+            if (document.getElementById('lblTarget')) document.getElementById('lblTarget').innerText = tRaw + (ind.satuan ? ' ' + ind.satuan : '');
+            let tNorm = String(tRaw).trim();
+            if (tNorm.includes(',')) tNorm = tNorm.split('.').join('').replace(',', '.');
+            document.getElementById('isiTarget').value = parseFloat(tNorm.replace(/[^0-9.]/g, '')) || 1;
+
+            ['1', '2', '3', '4'].forEach(n => {
+                document.getElementById('tw' + n).value = ind['tw' + n] || '';
+                document.getElementById('keterangan_tw' + n).value = ind['keterangan_tw' + n] || '';
+                document.getElementById('kendala_tw' + n).value = ind['kendala_tw' + n] || '';
+                document.getElementById('rekomendasi_tw' + n).value = ind['rekomendasi_tw' + n] || '';
+
+                hitungCapaianTw(parseInt(n));
+            });
+            document.getElementById('realisasi_akhir').value = ind.realisasi_akhir || '';
+            document.getElementById('keterangan_akhir').value = ind.keterangan_akhir || '';
+            document.getElementById('kendala_akhir').value = ind.kendala_akhir || '';
+            document.getElementById('rekomendasi_akhir').value = ind.rekomendasi_akhir || '';
+
+            ['tw1', 'tw2', 'tw3', 'tw4', 'akhir'].forEach(s => {
+                document.getElementById('section-' + s).style.display = 'none';
+            });
+            const sectionId = tw === 'akhir' ? 'section-akhir' : 'section-tw' + tw;
+            document.getElementById(sectionId).style.display = '';
+
+            if (document.getElementById('capaianAutoContainer')) {
+                document.getElementById('capaianAutoContainer').style.display = (tw === 'akhir') ? 'block' : 'none';
+            }
+
+            bukaModal('modalIsi');
+            hitungCapaian();
+        }
+
+        function hitungCapaianTw(n) {
+            const target = parseFloat(document.getElementById('isiTarget').value) || 1;
+            const real = parseNum(document.getElementById('tw' + n).value);
+            const c = real > 0 ? ((real / target) * 100).toFixed(2) + ' %' : '-';
+            document.getElementById('capaian_tw' + n + '_display').value = c;
+        }
+
+        function hitungCapaian() {
+            const target = parseFloat(document.getElementById('isiTarget').value) || 1;
+            const real = parseNum(document.getElementById('realisasi_akhir').value);
+            const c = real > 0 ? ((real / target) * 100).toFixed(2) : '0.00';
+            const color = c >= 100 ? 'text-green-600' : c >= 80 ? 'text-yellow-500' : c > 0 ? 'text-red-600' : 'text-gray-700';
+            if (document.getElementById('outputCapaian')) document.getElementById('outputCapaian').innerHTML =
+                '<span class="' + color + '">' + c + '</span> <span class="text-xs text-gray-400 font-normal">%</span>';
+            if (document.getElementById('outputCapaianAkhir'))
+                document.getElementById('outputCapaianAkhir').value = c + ' %';
+        }
+
+        function submitIsi(e) {
+            e.preventDefault();
+            const id = document.getElementById('isiId').value;
+            const currentTw = document.getElementById('currentActiveTw').value || '1';
+
+            fetch('{{ @BASE }}/Capaian-Kinerja/update/' + id, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(e.target)
+            }).then(r => r.json()).then(data => {
+                if (typeof tutupModal === 'function') tutupModal('modalIsi');
+                if (data.status === 'success') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tw', currentTw);
+                    window._reloadUrl = url.toString();
+                    window._reloadAfterNotif = true;
+                } else {
+                    window._reloadAfterNotif = false;
+                    window._reloadUrl = null;
+                }
+                tampilNotif(data.status, data.message);
+            }).catch(() => {
+                if (typeof tutupModal === 'function') tutupModal('modalIsi');
+                tampilNotif('error', 'Terjadi kesalahan jaringan.');
+            });
+        }
+    </script>

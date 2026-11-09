@@ -1,0 +1,66 @@
+<div class="mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <div>
+        <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+    </div>
+
+    <div class="flex items-center">
+        <form id="dashForm" action="{{ @BASE }}/dashboard" method="GET" class="flex items-center gap-3">
+
+            <div x-data="{open:false,val:'{{ @selectedTopikId }}',label:'{{ @selectedTopikLabel }}',go(v,l){this.val=v;this.label=l;this.open=false;document.getElementById('dTopik').value=v;document.getElementById('dashForm').submit();}}"
+                class="relative w-56 text-left">
+                <input type="hidden" id="dTopik" name="topik_id" :value="val">
+                <button @click="open=!open" @click.away="open=false" type="button"
+                    class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none transition-colors">
+                    <span x-html="label" class="truncate pr-2"></span>
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div x-show="open" style="display:none"
+                    class="absolute right-0 z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 max-h-60 overflow-y-auto">
+                    <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                        <div @click="go('{{ @tp.id }}','{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}')"
+                            class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors {{ @selectedTopikId == @tp.id ? 'bg-blue-50 text-[#1F4E79] font-semibold' : '' }}">
+                            {{ @tp.judul }}
+                        </div>
+                    </F3:repeat>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+    <div class="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-4 transition-shadow">
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Total Sasaran</p>
+        <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ @summary.total_sasaran }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Sesuai renstra/perkin</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-4 transition-shadow">
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Total Indikator</p>
+        <h3 class="text-2xl font-bold text-gray-800 mt-1">{{ @summary.total_indikator }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Per topik terpilih</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border-l-4 border-green-500 p-4 transition-shadow">
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Target Tercapai</p>
+        <h3 class="text-2xl font-bold text-green-600 mt-1">{{ @summary.indikator_hijau }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Realisasi akhir &ge; target</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border-l-4 border-yellow-500 p-4 transition-shadow">
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Belum Terdefinisi</p>
+        <h3 class="text-2xl font-bold text-yellow-600 mt-1">{{ @summary.indikator_kuning }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Belum ada realisasi</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border-l-4 border-red-500 p-4 transition-shadow">
+        <p class="text-xs font-semibold tracking-wide text-gray-500 uppercase">Tidak Tercapai</p>
+        <h3 class="text-2xl font-bold text-red-600 mt-1">{{ @summary.indikator_merah }}</h3>
+        <p class="text-xs text-gray-400 mt-1">Realisasi akhir &lt; target</p>
+    </div>
+
+</div>

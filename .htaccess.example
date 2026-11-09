@@ -1,0 +1,19 @@
+# ============================================================
+# .htaccess — Contoh konfigurasi Apache untuk PERJAKIN
+# ============================================================
+# Salin file ini menjadi .htaccess:
+#   $ cp .htaccess.example .htaccess
+# ============================================================
+
+Options -Indexes
+
+RewriteEngine On
+
+# Lewati request ke file/folder yang benar-benar ada (aset statis)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-l
+
+# Semua request lainnya → entry point F3
+RewriteRule .* index.php [L,QSA]
+

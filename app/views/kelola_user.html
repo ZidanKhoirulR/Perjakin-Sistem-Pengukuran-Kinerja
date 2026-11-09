@@ -1,0 +1,390 @@
+<div class="mb-4 flex items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-xl font-bold text-gray-800">Kelola User</h2>
+</div>
+
+<input type="hidden" id="sessSuccess" value="{{ @successMsg ?? '' }}">
+<input type="hidden" id="sessError" value="{{ @errorMsg ?? '' }}">
+<input type="hidden" id="csrfToken" value="{{ @csrf }}">
+
+<div class="mb-5 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div class="flex flex-wrap items-center gap-3">
+        <div x-data="{
+            open: false,
+            val: 'null_role',
+            label: 'Tidak Ada',
+            opts: [
+                { v: 'superadmin', l: 'Superadmin' },
+                { v: 'pic', l: 'PIC' },
+                { v: 'viewer', l: 'Viewer' },
+                { v: 'null_role', l: 'Tidak Ada' }
+            ],
+            select(v, l) { this.val = v; this.label = l; this.open = false; document.getElementById('roleFilter').value = v; applyFilters(); }
+        }" class="relative text-left">
+            <input type="hidden" id="roleFilter" value="null_role">
+            <button @click="open = !open" @click.away="open = false" type="button"
+                class="flex items-center justify-between w-40 px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <span x-text="label" class="truncate pr-2"></span>
+                <svg class="w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0" :class="{'rotate-180': open}"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div x-show="open" x-transition.opacity.duration.200ms style="display: none;"
+                class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                <template x-for="opt in opts" :key="opt.v">
+                    <div @click="select(opt.v, opt.l)"
+                        class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors"
+                        :class="val === opt.v ? 'bg-blue-50 text-blue-700 font-bold' : ''">
+                        <span x-text="opt.l"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Search Input (ujung kanan) -->
+        <div class="relative w-52 ml-auto">
+            <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                </svg>
+            </span>
+            <input type="text" id="searchInput" placeholder="Cari nama / username..."
+                class="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition"
+                oninput="applyFilters()">
+        </div>
+    </div>
+</div>
+
+<!-- Tabel -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full divide-y divide-gray-200" id="userTable">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-12">No
+                    </th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Nama
+                        Lengkap</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Username</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-40">
+                        Role</th>
+                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                        Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="userTableBody">
+                <F3:check if="{{ empty(@users) }}">
+                    <F3:true>
+                        <tr>
+                            <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-400 italic">
+                                Tidak ada data pengguna.
+                            </td>
+                        </tr>
+                    </F3:true>
+                    <F3:false>
+                        <F3:set no="{{ 1 }}" />
+                        <F3:repeat group="{{ @users }}" value="{{ @u }}">
+                            <tr class="hover:bg-gray-50 transition-colors user-row"
+                                data-nama="{{ strtolower(@u.nama_user) }}" data-login="{{ strtolower(@u.login) }}">
+                                <td class="px-4 py-3 text-center text-sm text-gray-900 row-number">
+                                    {{ @no }}
+                                    <F3:set no="{{ @no+1 }}" />
+                                </td>
+                                <td class="px-4 py-3 text-center text-sm text-gray-900 font-medium">
+                                    {{ @u.nama_user ?: '-' }}
+                                </td>
+                                <td class="px-4 py-3 text-center text-sm text-gray-900 font-mono">
+                                    {{ @u.login }}
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <F3:check if="{{ @u.si_perjakin == 'superadmin' }}">
+                                        <F3:true>
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Superadmin</span>
+                                        </F3:true>
+                                    </F3:check>
+                                    <F3:check if="{{ @u.si_perjakin == 'pic' }}">
+                                        <F3:true>
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">PIC</span>
+                                        </F3:true>
+                                    </F3:check>
+                                    <F3:check if="{{ @u.si_perjakin == 'viewer' }}">
+                                        <F3:true>
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Viewer</span>
+                                        </F3:true>
+                                    </F3:check>
+                                    <F3:check if="{{ empty(@u.si_perjakin) }}">
+                                        <F3:true>
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">Tidak
+                                                Ada</span>
+                                        </F3:true>
+                                    </F3:check>
+                                </td>
+                                <td class="px-4 py-3 text-center">
+                                    <button type="button" data-id="{{ @u.id_user }}"
+                                        data-nama="{{ htmlspecialchars(@u.nama_user, ENT_QUOTES, 'UTF-8') }}"
+                                        data-role="{{ @u.si_perjakin }}"
+                                        onclick="bukaModalEditRole(this.dataset.id, this.dataset.nama, this.dataset.role)"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#1F4E79] bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                        Edit Role
+                                    </button>
+                                </td>
+                            </tr>
+                        </F3:repeat>
+                    </F3:false>
+                </F3:check>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-end bg-white" id="paginationContainer">
+        <div class="flex items-center gap-1" id="paginationButtons">
+            <!-- Buttons will be injected here by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Role -->
+<div id="modalEditRole" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all animate-fade-in">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-[#1F4E79] flex items-center justify-between bg-[#1F4E79] rounded-t-2xl">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.768 3.768z" />
+                </svg>
+                <h3 class="text-lg font-bold text-white">Edit Role Pengguna</h3>
+            </div>
+            <button type="button" onclick="tutupModalRole()"
+                class="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+            <p class="text-sm text-gray-500">Mengubah hak akses untuk: <span id="modalNamaUser"
+                    class="font-semibold text-gray-800"></span></p>
+
+            <input type="hidden" id="editUserId">
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Hak Akses (Role) <span
+                        class="text-red-500">*</span></label>
+                <select id="editRoleSelect"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1F4E79] focus:border-[#1F4E79] transition-colors hover:border-blue-400 bg-white">
+                    <option value="">Tidak Ada</option>
+                    <option value="superadmin">Superadmin</option>
+                    <option value="pic">PIC</option>
+                    <option value="viewer">Viewer</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+            <button type="button" onclick="tutupModalRole()"
+                class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-800 transition shadow-sm">
+                Batal
+            </button>
+            <button type="button" onclick="simpanRole()"
+                class="px-4 py-2 text-sm font-semibold text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition shadow-sm">
+                Simpan Role
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BASE_URL = '{{ @BASE }}';
+    const CSRF_TOKEN = document.getElementById('csrfToken').value;
+
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    let filteredRows = [];
+
+    function applyFilters() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const allRows = Array.from(document.querySelectorAll('.user-row'));
+        
+        filteredRows = allRows.filter(row => {
+            const nama = row.dataset.nama || '';
+            const login = row.dataset.login || '';
+            const btn = row.querySelector('button');
+            const dataRole = btn ? btn.dataset.role : '';
+            const role = (dataRole === '' || !dataRole) ? 'null_role' : dataRole;
+
+            const matchSearch = nama.includes(q) || login.includes(q);
+            const matchRole = !roleFilter || role === roleFilter;
+
+            return matchSearch && matchRole;
+        });
+
+        // Hide all rows first
+        allRows.forEach(row => row.style.display = 'none');
+        
+        currentPage = 1;
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        
+        // Show only rows for current page
+        filteredRows.forEach((row, index) => {
+            if (index >= startIndex && index < endIndex) {
+                row.style.display = '';
+                row.querySelector('.row-number').textContent = index + 1;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        renderPaginationButtons(totalPages);
+    }
+
+    function renderPaginationButtons(totalPages) {
+        const container = document.getElementById('paginationButtons');
+        container.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+
+        // Prev Button
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '&laquo;';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.className = `px-3 py-1 rounded border text-sm ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`;
+        prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; renderPagination(); } };
+        container.appendChild(prevBtn);
+
+        // Page Buttons
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className = `px-3 py-1 rounded border text-sm ${currentPage === i ? 'bg-[#1F4E79] text-white border-[#1F4E79] font-semibold' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`;
+            btn.onclick = () => { currentPage = i; renderPagination(); };
+            container.appendChild(btn);
+        }
+
+        // Next Button
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '&raquo;';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.className = `px-3 py-1 rounded border text-sm ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'}`;
+        nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; renderPagination(); } };
+        container.appendChild(nextBtn);
+    }
+
+    function bukaModalEditRole(id, nama, currentRole) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('modalNamaUser').textContent = nama || 'Pengguna';
+        document.getElementById('editRoleSelect').value = currentRole || '';
+        document.getElementById('modalEditRole').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function tutupModalRole() {
+        document.getElementById('modalEditRole').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    async function simpanRole() {
+        const id = document.getElementById('editUserId').value;
+        const role = document.getElementById('editRoleSelect').value;
+
+        try {
+            const res = await fetch(BASE_URL + '/Kelola-User/update-role/' + id, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new URLSearchParams({ csrf_token: CSRF_TOKEN, role: role })
+            });
+            const result = await res.json();
+            tutupModalRole();
+
+            if (result.status === 'success') {
+                window._reloadAfterNotif = true;
+                tutupModalRole();
+                tampilNotif('success', result.message);
+            } else {
+                tutupModalRole();
+                tampilNotif('error', result.message);
+            }
+        } catch (err) {
+            tutupModalRole();
+            tampilNotif('error', 'Terjadi kesalahan pada server.');
+        }
+    }
+
+    function tampilNotif(status, message) {
+        const icon = document.getElementById('notifIcon');
+        const title = document.getElementById('notifTitle');
+        const msg = document.getElementById('notifMessage');
+        if (status === 'success') {
+            icon.className = 'mx-auto w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mb-4';
+            icon.innerHTML = '<svg class="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            title.textContent = 'Berhasil!';
+        } else {
+            icon.className = 'mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4';
+            icon.innerHTML = '<svg class="w-7 h-7 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+            title.textContent = 'Gagal!';
+        }
+        msg.textContent = message;
+        document.getElementById('modalNotif').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function tutupNotif() {
+        document.getElementById('modalNotif').classList.add('hidden');
+        document.body.style.overflow = '';
+        if (window._reloadAfterNotif) {
+            window._reloadAfterNotif = false;
+            location.reload();
+        }
+    }
+
+    window.onload = function () {
+        const s = document.getElementById('sessSuccess').value;
+        const e = document.getElementById('sessError').value;
+        if (s) tampilNotif('success', s);
+        else if (e) tampilNotif('error', e);
+        
+        applyFilters(); // Initialize pagination on load
+    };
+</script>
+
+<div id="modalNotif" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+        <div class="px-6 py-6 text-center">
+            <div id="notifIcon" class="mx-auto w-14 h-14 rounded-full flex items-center justify-center mb-4"></div>
+            <h3 id="notifTitle" class="text-lg font-semibold text-gray-800 mb-1"></h3>
+            <p id="notifMessage" class="text-sm text-gray-500"></p>
+        </div>
+        <div class="px-6 pb-6 flex justify-center">
+            <button onclick="tutupNotif()"
+                class="px-10 py-2.5 text-sm text-white bg-[#1F4E79] rounded-lg hover:bg-blue-800 transition font-semibold shadow-sm">OK</button>
+        </div>
+    </div>
+</div>

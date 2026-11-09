@@ -1,0 +1,138 @@
+<?php
+/**
+ * ============================================================
+ * PERJAKIN — Sistem Pengukuran Kinerja Instansi
+ * ============================================================
+ * File ini adalah CONTOH konfigurasi.
+ * Salin file ini menjadi index.php lalu sesuaikan pengaturan
+ * koneksi database dan konfigurasi lainnya.
+ *
+ * $ cp index.php.example index.php
+ * ============================================================
+ */
+
+define('APP_ROOT', __DIR__);
+
+require APP_ROOT . '/vendor/autoload.php';
+
+$f3 = \Base::instance();
+
+$f3->set('DEBUG', 2);
+$f3->set('ENCODING', 'UTF-8');
+$f3->set('CACHE', false);
+$f3->set('TEMP', APP_ROOT . '/tmp/');
+$f3->set('UI', APP_ROOT . '/app/views/');
+$f3->set('AUTOLOAD', APP_ROOT . '/app/');
+
+// --- KONEKSI DATABASE UTAMA (PERJAKIN) ---
+// Sesuaikan kredensial berikut dengan database Anda
+$f3->set('db.host', 'localhost');
+$f3->set('db.port', 3306);
+$f3->set('db.name', 'perjakin');           // Nama database
+$f3->set('db.user', 'root');               // Username database
+$f3->set('db.pass', '');                   // Password database
+
+try {
+    $db = new \DB\SQL(
+        'mysql:host=' . $f3->get('db.host')
+        . ';port=' . $f3->get('db.port')
+        . ';dbname=' . $f3->get('db.name')
+        . ';charset=utf8mb4',
+        $f3->get('db.user'),
+        $f3->get('db.pass'),
+    [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+        );
+    $f3->set('DB', $db);
+}
+catch (\PDOException $e) {
+    error_log('[Perjakin] Koneksi database gagal: ' . $e->getMessage());
+    http_response_code(500);
+    $msg = $e->getMessage();
+    die("<h3 style='font-family:sans-serif;color:#c00'>Koneksi database gagal.</h3>
+         <p style='font-family:monospace;background:#eee;padding:10px;'>Error: $msg</p>
+         <p>Silakan sesuaikan pengaturan database di file <code>index.php</code>.</p>");
+}
+
+
+// --- KONEKSI DATABASE AUTH (sil2020) ---
+// Database autentikasi dari sistem SILA (opsional)
+$f3->set('db.sil_host', 'localhost');
+$f3->set('db.sil_port', 3306);
+$f3->set('db.sil_name', 'sil2020');        // Nama database SILA
+$f3->set('db.sil_user', 'root');           // Username database
+$f3->set('db.sil_pass', '');               // Password database
+
+try {
+    $dbSil = new \DB\SQL(
+        'mysql:host=' . $f3->get('db.sil_host')
+        . ';port=' . $f3->get('db.sil_port')
+        . ';dbname=' . $f3->get('db.sil_name')
+        . ';charset=utf8mb4',
+        $f3->get('db.sil_user'),
+        $f3->get('db.sil_pass'),
+    [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+        );
+    $f3->set('DB_SIL', $dbSil);
+}
+catch (\PDOException $e) {
+    error_log('[Perjakin] Koneksi ' . $f3->get('db.sil_name') . ' gagal: ' . $e->getMessage());
+    // Tidak fatal – login PIC tetap bisa dicoba via DB lokal
+    $f3->set('DB_SIL', null);
+}
+
+// Auth
+$f3->route('GET /login', 'Controllers\AuthController->showLogin');
+$f3->route('POST /login/send-otp', 'Controllers\AuthController->sendOTP'); // AJAX: verif creds → kirim OTP
+$f3->route('POST /login', 'Controllers\AuthController->doLogin'); // AJAX: verif OTP → buat session
+$f3->route('POST /loginsila', 'Controllers\AuthController->loginsila'); // Alur login dua-langkah ala SILA
+$f3->route('GET /logout', 'Controllers\AuthController->doLogout');
+
+// Dashboard
+$f3->route('GET /dashboard', 'Controllers\DashboardController->index');
+
+// Tahun Perjakin
+$f3->route('GET /Tahun-Perjakin', 'Controllers\TahunPerjakinController->index');
+$f3->route('POST /Tahun-Perjakin/store', 'Controllers\TahunPerjakinController->store');
+$f3->route('POST /Tahun-Perjakin/update/@id', 'Controllers\TahunPerjakinController->update');
+$f3->route('POST /Tahun-Perjakin/delete/@id', 'Controllers\TahunPerjakinController->destroy');
+
+// Perjanjian Kinerja (Tujuan/Sasaran & Indikator)
+$f3->route('GET /master', function ($f3) {
+    $f3->reroute('/Indikator-Kinerja');
+});
+$f3->route('GET /Indikator-Kinerja', 'Controllers\PerjanjianKinerjaController->index');
+$f3->route('GET /Tujuan-Sasaran', 'Controllers\PerjanjianKinerjaController->tujuan');
+$f3->route('POST /Tujuan-Sasaran/store', 'Controllers\PerjanjianKinerjaController->storeTujuan');
+$f3->route('POST /Tujuan-Sasaran/update/@id', 'Controllers\PerjanjianKinerjaController->updateTujuan');
+$f3->route('POST /Tujuan-Sasaran/delete/@id', 'Controllers\PerjanjianKinerjaController->deleteTujuan');
+$f3->route('POST /Indikator-Kinerja/store', 'Controllers\PerjanjianKinerjaController->store');
+$f3->route('POST /Indikator-Kinerja/update/@id', 'Controllers\PerjanjianKinerjaController->update');
+$f3->route('POST /Indikator-Kinerja/delete/@id', 'Controllers\PerjanjianKinerjaController->delete');
+$f3->route('POST /Indikator-Kinerja/assign-pic', 'Controllers\PerjanjianKinerjaController->assignPIC');
+
+// Capaian Kinerja
+$f3->route('GET /Capaian-Kinerja', 'Controllers\CapaianKinerjaController->index');
+$f3->route('POST /Capaian-Kinerja/update/@id', 'Controllers\CapaianKinerjaController->update');
+$f3->route('GET /Capaian-Kinerja/export', 'Controllers\CapaianKinerjaController->export');
+
+// Dokumen Perkin
+$f3->route('GET /Dokumen-Perkin', 'Controllers\LaporanController->index');
+$f3->route('GET /Dokumen-Perkin/export', 'Controllers\LaporanController->export');
+$f3->route('GET /Rekap-Capaian', 'Controllers\RekapCapaianController->index');
+
+// Kelola User
+$f3->route('GET /Kelola-User', 'Controllers\KelolaUserController->index');
+$f3->route('POST /Kelola-User/update-role/@id', 'Controllers\KelolaUserController->updateRole');
+
+// Root
+$f3->route('GET /', function ($f3) {
+    if (\Helpers\AuthHelper::isLoggedIn()) {
+        $f3->reroute('/dashboard');
+    }
+    else {
+        $f3->reroute('/login');
+    }
+});
+
+$f3->run();
+

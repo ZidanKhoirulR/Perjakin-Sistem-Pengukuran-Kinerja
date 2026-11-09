@@ -1,0 +1,196 @@
+body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.bg-sidebar {
+    background-color: #1F4E79;
+}
+
+.text-sidebar-hover {
+    color: #2E86C1;
+}
+
+.custom-gradient {
+    position: relative;
+    background-color: #000000;
+    /* Pre-render ganti hitam agar seragam dengan overlay */
+    overflow: hidden;
+}
+
+.slider-container {
+    display: flex;
+    width: 300%;
+    /* 3 images = 300% width */
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -2;
+    animation: slideCarousel 12s infinite;
+}
+
+.bg-slideshow {
+    width: 33.3333%;
+    /* 100% / 3 images */
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.bg-slideshow:nth-child(1) {
+    background-image: url('../img/background1.jpeg');
+}
+
+.bg-slideshow:nth-child(2) {
+    background-image: url('../img/background2.jpeg');
+}
+
+.bg-slideshow:nth-child(3) {
+    background-image: url('../img/background3.jpeg');
+}
+
+@keyframes slideCarousel {
+
+    0%,
+    28% {
+        transform: translateX(0);
+        /* Image 1 */
+    }
+
+    33%,
+    61% {
+        transform: translateX(-33.3333%);
+        /* Image 2 */
+    }
+
+    66%,
+    94% {
+        transform: translateX(-66.6666%);
+        /* Image 3 */
+    }
+
+    100% {
+        transform: translateX(0);
+        /* Back to Image 1 */
+    }
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
+/* Global Utility */
+[x-cloak] {
+    display: none !important;
+}
+
+.table-fixed {
+    table-layout: fixed;
+}
+
+/* Width Utilities */
+.w-5-pct {
+    width: 5% !important;
+}
+
+.w-10-pct {
+    width: 10% !important;
+}
+
+.w-15-pct {
+    width: 15% !important;
+}
+
+.w-20-pct {
+    width: 20% !important;
+}
+
+.w-25-pct {
+    width: 25% !important;
+}
+
+.w-30-pct {
+    width: 30% !important;
+}
+
+.w-40-pct {
+    width: 40% !important;
+}
+
+.w-50-pct {
+    width: 50% !important;
+}
+
+/* Table border darkening – semua tampilan tabel */
+table th,
+table td {
+    border-color: #b0b8c4 !important;
+}
+
+table.divide-y>thead,
+table.divide-y>tbody,
+table.divide-y>tfoot {
+    --tw-divide-opacity: 1;
+    border-color: #b0b8c4;
+}
+
+/* Tailwind divide-y: horizontal lines antar baris */
+.divide-y>*+* {
+    border-color: #b0b8c4 !important;
+}
+
+/* Fix CSS border horizontal pada tabel dengan collapse */
+table.divide-y tbody tr td,
+table.divide-y thead tr th {
+    border-bottom: 1px solid #b0b8c4 !important;
+}
+
+/* ============================================================
+   Filter Bar: sejajarkan tinggi dropdown, input, dan button
+   di semua halaman menu (konsisten 36px min-height)
+   ============================================================ */
+.filter-bar-item,
+.filter-bar-item button,
+.filter-bar-item input[type="text"] {
+    min-height: 36px;
+    box-sizing: border-box;
+}
+
+/* Pastikan semua elemen di flex container filter sejajar tengah */
+form .flex.flex-wrap.items-center,
+div .flex.flex-wrap.items-center.gap-3 {
+    align-items: center;
+}
+
+/* Samakan padding vertikal dropdown topik & triwulan agar setinggi button */
+button.flex.items-center.justify-between[class*="border-blue-400"],
+a[class*="border-green-"],
+a[class*="bg-green-"],
+button[class*="bg-\\[\\#1F4E79\\]"]:not([class*="py-1"]):not([class*="py-2\\.5"]):not([class*="px-10"]) {
+    padding-top: 0.5rem;
+    /* py-2 = 8px */
+    padding-bottom: 0.5rem;
+    line-height: 1.25rem;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    table {
+        font-size: 10px;
+    }
+}

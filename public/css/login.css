@@ -1,0 +1,115 @@
+.login-input-wrap {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 11px 44px 11px 14px;
+    background: #e8eef6;
+    border: 1px solid #cdd7e6;
+    border-radius: 5px;
+    font-size: 0.93rem;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .2s, background .2s;
+}
+
+.login-input:focus {
+    border-color: #1F4E79;
+    background: #dce7f4;
+}
+
+.login-input::placeholder {
+    color: #999;
+}
+
+.login-input:read-only {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.input-icon-right {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8fa5c0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.eye-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8fa5c0;
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.otp-label {
+    display: block;
+    font-size: 0.82rem;
+    color: #555;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+#otp-section {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height .45s ease, opacity .35s ease;
+    margin-top: 0;
+}
+
+#otp-section.visible {
+    max-height: 300px;
+    opacity: 1;
+    margin-top: 1rem;
+}
+
+/* WA badge */
+.wa-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #e7fce8;
+    color: #166534;
+    font-size: .73rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+.wa-dot {
+    width: 8px;
+    height: 8px;
+    background: #25D366;
+    border-radius: 50%;
+    animation: blink 1.4s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1
+    }
+
+    50% {
+        opacity: .3
+    }
+}
+
+.countdown-text {
+    font-variant-numeric: tabular-nums;
+}

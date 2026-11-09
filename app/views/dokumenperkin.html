@@ -1,0 +1,136 @@
+<div class="mb-4 flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <h2 class="text-xl font-bold text-gray-800">Dokumen Perkin</h2>
+</div>
+
+<div class="mb-5 bg-white rounded-lg shadow-sm border border-gray-200 p-4 no-print">
+    <form id="filterForm" action="{{ @BASE }}/Dokumen-Perkin" method="GET">
+        <div class="flex flex-wrap items-center justify-between gap-3 w-full">
+            <div class="flex flex-wrap items-center gap-3">
+                <div x-data="{
+                    open:false, val:'{{ @selectedTopikId ?: 0 }}', label:'Pilih Topik',
+                    go(v,l){this.val=v;this.label=l;this.open=false;document.getElementById('hTopik').value=v;document.getElementById('filterForm').submit();}
+                }" x-init="const t='{{ @selectedTopikId ?: 0 }}'; if(parseInt(t)>0){document.querySelectorAll('[data-tv]').forEach(e=>{if(e.dataset.tv==t)label=e.dataset.tl;});}"
+                    class="relative w-52 text-left">
+                    <input type="hidden" id="hTopik" name="topik_id" :value="val">
+                    <button @click="open=!open" @click.away="open=false" type="button"
+                        class="flex items-center justify-between w-full px-4 py-2 bg-white border border-blue-400 rounded-lg text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <span x-html="label" class="truncate pr-2"></span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200"
+                            :class="{'rotate-180':open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" x-transition.opacity.duration.200ms style="display:none"
+                        class="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden py-1">
+                        <div class="max-h-60 overflow-y-auto">
+                            <F3:repeat group="{{ @topiks }}" value="{{ @tp }}">
+                                <div @click="go('{{ @tp.id }}','{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}')"
+                                    data-tv="{{ @tp.id }}" data-tl="{{ htmlspecialchars(@tp.judul, ENT_QUOTES) }}"
+                                    class="px-4 py-2.5 cursor-pointer hover:bg-blue-50 hover:text-blue-700 text-sm font-medium text-slate-600 transition-colors"
+                                    :class="val=='{{ @tp.id }}'?'bg-blue-50 text-blue-700 font-bold':''">{{ @tp.judul }}
+                                </div>
+                            </F3:repeat>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ @exportUrl }}" target="_blank"
+                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Excel
+            </a>
+        </div>
+    </form>
+</div>
+
+<F3:check if="{{ empty(@indikatorGrouped) }}">
+    <F3:true>
+        <div class="bg-white p-8 rounded-lg shadow-sm border border-gray-200 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Belum ada data</h3>
+            <p class="mt-1 text-sm text-gray-500">Pilih topik yang memiliki data indikator.</p>
+        </div>
+    </F3:true>
+    <F3:false>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200 w-12">
+                                No</th>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200 w-24">
+                                Kode</th>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200">
+                                Tujuan / Sasaran</th>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200">
+                                Indikator Kinerja</th>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200 w-28">
+                                Target</th>
+                            <th
+                                class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase border-r border-gray-200 min-w-[150px]">
+                                Satuan</th>
+                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase min-w-[150px]">
+                                PIC</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 border-b border-gray-200">
+                        <F3:set ctr="{{ 1 }}" />
+                        <F3:repeat group="{{ @indikatorGrouped }}" value="{{ @tujuanGroup }}">
+                            <F3:set rowCount="{{ count(@tujuanGroup.indikators) }}" />
+                            <F3:repeat group="{{ @tujuanGroup.indikators }}" value="{{ @ind }}" key="{{ @indKey }}">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <F3:check if="{{ @indKey == 0 }}">
+                                        <F3:true>
+                                            <td rowspan="{{ @rowCount }}"
+                                                class="px-3 py-3 text-center text-sm text-gray-900 border-r border-b border-gray-200 bg-white align-top">
+                                                {{ @ctr }}
+                                                <F3:set ctr="{{ @ctr+1 }}" />
+                                            </td>
+                                            <td rowspan="{{ @rowCount }}"
+                                                class="px-3 py-3 text-center text-sm text-gray-900 border-r border-b border-gray-200 bg-white align-top font-medium">
+                                                {{ @tujuanGroup.kode }}</td>
+                                            <td rowspan="{{ @rowCount }}"
+                                                class="px-3 py-3 text-sm text-gray-900 border-r border-b border-gray-200 bg-white align-top">
+                                                {{ @tujuanGroup.nama }}</td>
+                                        </F3:true>
+                                    </F3:check>
+                                    <td
+                                        class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 {{ @indKey < @rowCount - 1 ? 'border-b border-gray-100' : 'border-b border-gray-200' }}">
+                                        {{ @ind.nama }}</td>
+                                    <td
+                                        class="px-3 py-3 text-center text-sm text-gray-900 border-r border-gray-200 {{ @indKey < @rowCount - 1 ? 'border-b border-gray-100' : 'border-b border-gray-200' }}">
+                                        {{ @ind.target_tahunan }}</td>
+                                    <td
+                                        class="px-3 py-3 text-center text-sm text-gray-900 border-r border-gray-200 {{ @indKey < @rowCount - 1 ? 'border-b border-gray-100' : 'border-b border-gray-200' }}">
+                                        {{ @ind.satuan ?: '-' }}</td>
+                                    <F3:check if="{{ @ind.pic_show }}">
+                                        <F3:true>
+                                            <td rowspan="{{ @ind.pic_rowspan }}"
+                                                class="px-3 py-3 text-center text-sm text-gray-900 border-l border-gray-200 bg-white align-middle">
+                                                {{ @ind.pic_nama ?: '-' }}</td>
+                                        </F3:true>
+                                    </F3:check>
+                                </tr>
+                            </F3:repeat>
+                        </F3:repeat>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </F3:false>
+</F3:check>
