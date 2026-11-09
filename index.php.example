@@ -1,15 +1,4 @@
 <?php
-/**
- * ============================================================
- * PERJAKIN — Sistem Pengukuran Kinerja Instansi
- * ============================================================
- * File ini adalah CONTOH konfigurasi.
- * Salin file ini menjadi index.php lalu sesuaikan pengaturan
- * koneksi database dan konfigurasi lainnya.
- *
- * $ cp index.php.example index.php
- * ============================================================
- */
 
 define('APP_ROOT', __DIR__);
 
@@ -24,12 +13,12 @@ $f3->set('TEMP', APP_ROOT . '/tmp/');
 $f3->set('UI', APP_ROOT . '/app/views/');
 $f3->set('AUTOLOAD', APP_ROOT . '/app/');
 
-// --- KONEKSI DATABASE UTAMA (PERJAKIN) ---
-// Sesuaikan kredensial berikut dengan database Anda
+// --- KONEKSI DATABASE UTAMA ---
+// Sesuaikan kredensial berikut dengan database 
 $f3->set('db.host', 'localhost');
-$f3->set('db.port', 3306);
-$f3->set('db.name', 'perjakin');           // Nama database
-$f3->set('db.user', 'root');               // Username database
+$f3->set('db.port', );
+$f3->set('db.name', '');           // Nama database
+$f3->set('db.user', '');               // Username database
 $f3->set('db.pass', '');                   // Password database
 
 try {
@@ -54,12 +43,12 @@ catch (\PDOException $e) {
 }
 
 
-// --- KONEKSI DATABASE AUTH (sil2020) ---
-// Database autentikasi dari sistem SILA (opsional)
+// --- KONEKSI DATABASE AUTH  ---
+
 $f3->set('db.sil_host', 'localhost');
-$f3->set('db.sil_port', 3306);
-$f3->set('db.sil_name', 'sil2020');        // Nama database SILA
-$f3->set('db.sil_user', 'root');           // Username database
+$f3->set('db.sil_port', );
+$f3->set('db.sil_name', '');        // Nama database SILA
+$f3->set('db.sil_user', '');           // Username database
 $f3->set('db.sil_pass', '');               // Password database
 
 try {
